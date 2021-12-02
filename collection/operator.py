@@ -11,8 +11,6 @@ class SVA_OT_collections_store_or_restore_settings(bpy.types.Operator):
     store: bpy.props.BoolProperty()
 
     def execute(self, context):
-        outliner_area = get_outliner_area(context)
-
         collections_props = context.scene.sva[self.index].collections
         collections_props_mapping = {c.name: c for c in collections_props}
 
@@ -26,6 +24,6 @@ class SVA_OT_collections_store_or_restore_settings(bpy.types.Operator):
             else:
                 col_props.restore(col)
 
-        outliner_area.tag_redraw()
+        get_outliner_area(context).tag_redraw()
 
         return {"FINISHED"}

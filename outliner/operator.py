@@ -19,6 +19,6 @@ class SVA_OT_test(bpy.types.Operator):
             outliner_props.store(space)
         else:
             outliner_props.restore(space)
-            outliner_area.tag_redraw()
+            get_outliner_area(context).tag_redraw()
 
         return {"FINISHED"}

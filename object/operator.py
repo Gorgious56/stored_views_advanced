@@ -19,7 +19,8 @@ class SVA_OT_objects_store_or_restore_settings(bpy.types.Operator):
                 props.store(obj, scene)
             else:
                 props.restore(obj, scene)
-                get_outliner_area(context).tag_redraw()
+        
+        get_outliner_area(context).tag_redraw()
 
 
         return {"FINISHED"}
