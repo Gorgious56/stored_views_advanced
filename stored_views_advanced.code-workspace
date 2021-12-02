@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/*.pyc": true,
+			"__pycache__": true,
+			"*/__pycache__": true
+		}
+	}
+}
