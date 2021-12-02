@@ -1,4 +1,5 @@
 import bpy
+from stored_views_advanced.preferences.helper import get_preferences
 
 
 class SVA_OT__stored_views_store(bpy.types.Operator):
@@ -19,14 +20,19 @@ class SVA_OT__stored_views_store(bpy.types.Operator):
         else:
             correct_index = self.index
 
-        bpy.ops.sva.outliner_store_or_restore_settings(store=True, index=correct_index)
-        bpy.ops.sva.objects_store_or_restore_settings(store=True, index=correct_index)
-        bpy.ops.sva.collections_store_or_restore_settings(store=True, index=correct_index)
-        bpy.ops.sva.view_layer_store_or_restore_settings(store=True, index=correct_index)
+        prefs = get_preferences(context).settings
+        if prefs.sync_outliner:
+            bpy.ops.sva.outliner_store_or_restore_settings(store=True, index=correct_index)
+        if prefs.sync_objects:
+            bpy.ops.sva.objects_store_or_restore_settings(store=True, index=correct_index)
+        if prefs.sync_collections:
+            bpy.ops.sva.collections_store_or_restore_settings(store=True, index=correct_index)
+        if prefs.sync_view_layers:
+            bpy.ops.sva.view_layer_store_or_restore_settings(store=True, index=correct_index)
         return {"FINISHED"}
 
 
-class SVA_OT__stored_views_restore(bpy.types.Operator):
+class SVA_OT_stored_views_restore(bpy.types.Operator):
     bl_idname = "stored_views.set"
     bl_label = "Set"
     bl_description = "Update the view 3D according to this view"
@@ -38,10 +44,15 @@ class SVA_OT__stored_views_restore(bpy.types.Operator):
 
         VIEW3D_stored_views_set.execute(self, context)
 
-        bpy.ops.sva.outliner_store_or_restore_settings(store=False, index=self.index)
-        bpy.ops.sva.objects_store_or_restore_settings(store=False, index=self.index)
-        bpy.ops.sva.collections_store_or_restore_settings(store=False, index=self.index)
-        bpy.ops.sva.view_layer_store_or_restore_settings(store=False, index=self.index)
+        prefs = get_preferences(context).settings
+        if prefs.sync_outliner:
+            bpy.ops.sva.outliner_store_or_restore_settings(store=False, index=self.index)
+        if prefs.sync_objects:
+            bpy.ops.sva.objects_store_or_restore_settings(store=False, index=self.index)
+        if prefs.sync_collections:
+            bpy.ops.sva.collections_store_or_restore_settings(store=False, index=self.index)
+        if prefs.sync_view_layers:
+            bpy.ops.sva.view_layer_store_or_restore_settings(store=False, index=self.index)
         return {"FINISHED"}
 
 
