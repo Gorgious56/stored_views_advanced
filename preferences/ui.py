@@ -1,16 +1,16 @@
 import bpy
 
-from .prop import Settings
+from .prop import DefaultSettings
 
 
 class SVAAddonPreferences(bpy.types.AddonPreferences):
     bl_idname = "stored_views_advanced"
 
-    settings: bpy.props.PointerProperty(type=Settings)
+    settings: bpy.props.PointerProperty(type=DefaultSettings)
 
     def draw(self, context):
         layout = self.layout
-        layout.prop(self.settings, "sync_objects")
-        layout.prop(self.settings, "sync_collections")
-        layout.prop(self.settings, "sync_view_layers")
-        layout.prop(self.settings, "sync_outliner")
+        box = layout.box()
+        box.label(text="Default Synchronization Settings")
+        for attr in self.settings.__annotations__:
+            box.prop(self.settings, attr)
