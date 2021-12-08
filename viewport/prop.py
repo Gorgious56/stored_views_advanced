@@ -8,8 +8,9 @@ from bpy.props import (
     BoolVectorProperty,
     IntProperty,
     PointerProperty,
+    CollectionProperty,
 )
-from stored_views_advanced.shared.prop import PropsStore
+from stored_views_advanced.shared.prop import PropsStore, StringPropertyGroup
 
 
 class OverlayProperties(PropertyGroup, PropsStore):
@@ -163,13 +164,13 @@ class ViewProperties(PropertyGroup, PropsStore):
     lock_cursor: BoolProperty()
     lock_object: PointerProperty(type=Object)
     mirror_xr_session: BoolProperty()
-    overlay: PointerProperty(type=OverlayProperties)
+    # overlay: PointerProperty(type=OverlayProperties)  # Treated as standalone
     region_3d: PointerProperty(type=Region3DProperties)
     render_border_max_x: FloatProperty()
     render_border_max_y: FloatProperty()
     render_border_min_x: FloatProperty()
     render_border_min_y: FloatProperty()
-    shading: PointerProperty(type=ShadingProperties)
+    # shading: PointerProperty(type=ShadingProperties)  # Treated as standalone
     show_bundle_names: BoolProperty()
     show_camera_path: BoolProperty()
     show_gizmo: BoolProperty()
@@ -234,3 +235,5 @@ class ViewProperties(PropertyGroup, PropsStore):
     use_local_camera: BoolProperty()
     use_local_collections: BoolProperty()
     use_render_border: BoolProperty()
+
+    sub_props_store: CollectionProperty(type=StringPropertyGroup)

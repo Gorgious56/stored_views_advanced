@@ -3,7 +3,7 @@ from stored_views_advanced.outliner.prop import Properties as OutlinerProperties
 from stored_views_advanced.object.prop import Properties as ObjectProperties
 from stored_views_advanced.view_layer.prop import Properties as ViewLayerProperties
 from stored_views_advanced.collection.prop import Properties as CollectionProperties
-from stored_views_advanced.viewport.prop import ViewProperties as ViewportProperties
+from stored_views_advanced.viewport.prop import ViewProperties, OverlayProperties, ShadingProperties
 
 
 class ViewSyncSettings(bpy.types.PropertyGroup):
@@ -26,15 +26,9 @@ class ViewStoreStatus(bpy.types.PropertyGroup):
     overlays: bpy.props.BoolProperty()
 
 
-class ViewSettingsStore(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty()
-    sync_settings: bpy.props.PointerProperty(type=ViewSyncSettings)
-    stored_props: bpy.props.PointerProperty(type=ViewStoreStatus)
-    outliner: bpy.props.PointerProperty(type=OutlinerProperties)
-    objects: bpy.props.CollectionProperty(type=ObjectProperties)
-    view_layers: bpy.props.CollectionProperty(type=ViewLayerProperties)
-    collections: bpy.props.CollectionProperty(type=CollectionProperties)
-    viewport: bpy.props.PointerProperty(type=ViewportProperties)
+    viewport: PointerProperty(type=ViewProperties)
+    shading: PointerProperty(type=ShadingProperties)
+    overlays: PointerProperty(type=OverlayProperties)
 
     SETTINGS_TYPES = ("outliner", "objects", "collections", "view_layers", "viewport", "shading", "overlays")
 
