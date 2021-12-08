@@ -16,10 +16,10 @@ def draw_id(layout, context, store_name):
 
     row = layout.row(align=True)
     if current_entry:
-        store = row.operator("sva.store_entry", text="Store", icon="COPYDOWN")
-        store.store = store_name
-        store.index = current_index
-        store.is_storing = True
+        store_row = row.operator("sva.store_entry", text="Store", icon="COPYDOWN")
+        store_row.store = store_name
+        store_row.index = current_index
+        store_row.is_storing = True
     else:
         add = row.operator("sva.add_entry", text="Store", icon="COPYDOWN")
         add.store = store_name
@@ -38,30 +38,26 @@ def draw_id(layout, context, store_name):
     sync.store = store_name
     sync.index = current_index
     sync_row.enabled = current_index >= 0
-
-
-def draw_store_list(layout, context, store_name):
-    if not context.scene.sva.stores:
-        layout.operator("sva.init_stores")
-        return
-    store = context.scene.sva.get(store_name)
-
-    layout.template_list("SVA_UL_template_list", "", store, "store", store, "index")
-
-    row = layout.row(align=True)
-    add = row.operator("sva.add_entry", text="New View", icon="ADD")
-    add.store = store_name
-
+    
     inspect = row.row(align=True)
-    inspect.enabled = store.active is not None
+    inspect.enabled = current_index >= 0
     inspect.prop(context.scene.sva, "inspect", text="", icon="VIEWZOOM")
+    draw_entry_inspection(context, store, layout)
+
+
+def draw_entry_inspection(context, store, layout):
     if context.scene.sva.inspect and store.active is not None:
         entry = store.active
         for prop_name in SETTINGS_TYPES:
+            box = layout.box()
+            box.prop(
+                entry.stored_props,
+                prop_name,
+                text=prop_name.title().replace("_", " "),
+                icon=ICONS.get(prop_name, "BLANK1"),
+            )
             if not getattr(entry.sync_settings, prop_name) or not getattr(entry.stored_props, prop_name):
                 continue
-            box = layout.box()
-            box.label(text=prop_name.title().replace("_", " "), icon=ICONS.get(prop_name, "BLANK1"))
             prop = getattr(entry, prop_name)
             if hasattr(prop, "__annotations__"):
                 for ann in prop.__annotations__:
@@ -78,6 +74,25 @@ def draw_store_list(layout, context, store_name):
                                         sub_box.prop(sub_sub_prop, ann)
                         except TypeError:
                             sub_box.prop(sub_prop, ann)
+
+
+def draw_store_list(layout, context, store_name):
+    if not context.scene.sva.stores:
+        layout.operator("sva.init_stores")
+        return
+    store = context.scene.sva.get(store_name)
+
+    layout.template_list("SVA_UL_template_list", "", store, "settings", store, "index")
+
+    row = layout.row(align=True)
+    add = row.operator("sva.add_entry", text="New View", icon="ADD")
+    add.store = store_name
+
+    inspect = row.row(align=True)
+    inspect.enabled = store.active is not None
+    inspect.prop(context.scene.sva, "inspect", text="", icon="VIEWZOOM")
+    draw_entry_inspection(context, store, layout)
+
 
 class SVA_UL_template_list(bpy.types.UIList):
     #   flt_flag is the result of the filtering process for this item.
