@@ -1,85 +1,109 @@
 import bpy
+from bpy.types import Operator
+from bpy.props import StringProperty, IntProperty, BoolProperty
 from stored_views_advanced.preferences.helper import get_preferences
+from .constant import ICONS, SETTINGS_TYPES, TYPE_STORING
 
 
-class SVA_OT_add_entry(bpy.types.Operator):
+class SVA_OT_init_stores(Operator):
+    bl_label = "Initialize"
+    bl_idname = "sva.init_stores"
+
+    def execute(self, context):
+        stores = context.scene.sva.stores
+        if not stores:  # Init stores
+            for store_name_default in list(TYPE_STORING) + ["global"]:
+                new = stores.add()
+                new.name = store_name_default
+        return {"FINISHED"}
+
+
+class SVA_OT_add_entry(Operator):
     bl_label = "Add Entry"
     bl_idname = "sva.add_entry"
 
-    container: bpy.props.StringProperty(default="global")
-    name: bpy.props.StringProperty()
+    store: StringProperty(default="global")
+    name: StringProperty()
 
     def execute(self, context):
-        sva_props = context.scene.sva.get_store(self.container)
-        if sva_props.name == "":
-            sva_props.name = self.container
-        new = sva_props.add()
-        new.name = f"View {len(sva_props)}" if self.name == "" else self.name
+        store = context.scene.sva.get(self.store)
+        if store.name == "":  # Init store name. Should only be called once
+            store.name = self.store
 
-        prefs = get_preferences(context).settings
+        new = store.add()
+        new.name = f"View {len(store)}" if self.name == "" else self.name
+        if hasattr(context, self.store):
+            current_item = getattr(context, self.store)
+            if current_item:
+                new.identifier.set(current_item)
+
+        prefs = get_preferences(context).defaults
         sync_settings = new.sync_settings
-        for attr in new.SETTINGS_TYPES:
-            setattr(sync_settings, attr, getattr(prefs, f"sync_{attr}"))
+        for attr in SETTINGS_TYPES:
+            setattr(sync_settings, attr, getattr(prefs, attr))
 
-        bpy.ops.sva.store_entry(container=self.container, index=len(sva_props) - 1)
+        bpy.ops.sva.store_entry(store=self.store, index=len(store) - 1, is_storing=True)
 
         return {"FINISHED"}
 
 
-class SVA_OT_remove_entry(bpy.types.Operator):
+class SVA_OT_remove_entry(Operator):
     bl_label = "Remove Entry"
     bl_idname = "sva.remove_entry"
 
-    container: bpy.props.StringProperty(default="global")
-    index: bpy.props.IntProperty(default=-1)
+    store: StringProperty(default="global")
+    index: IntProperty(default=-1)
 
     def execute(self, context):
-        context.scene.sva.get_store(self.container).remove(self.index)
+        context.scene.sva.get(self.store).remove(self.index)
         return {"FINISHED"}
 
 
-class SVA_OT_restore_entry(bpy.types.Operator):
-    bl_label = "Restore Entry"
-    bl_idname = "sva.restore_entry"
-
-    container: bpy.props.StringProperty()
-    index: bpy.props.IntProperty()
-
-    def execute(self, context):
-        entry = context.scene.sva.get_store(self.container).get(self.index)
-        sync_settings = entry.sync_settings
-        stored_props = entry.stored_props
-        for attr in entry.SETTINGS_TYPES:
-            if getattr(sync_settings, attr) and getattr(stored_props, attr):
-                exec(f"bpy.ops.sva.{attr}_restore_settings(container=self.container, index=self.index)")
-        return {"FINISHED"}
-
-
-class SVA_OT_store_entry(bpy.types.Operator):
+class SVA_OT_store_entry(Operator):
     bl_label = "Store Entry"
     bl_idname = "sva.store_entry"
 
-    container: bpy.props.StringProperty()
-    index: bpy.props.IntProperty()
+    store: StringProperty()
+    index: IntProperty(default=-1)
+    is_storing: BoolProperty()
 
     def execute(self, context):
-        entry = context.scene.sva.get_store(self.container).get(self.index)
+        store = context.scene.sva.get(self.store)
+        entry = store.get(self.index)
         sync_settings = entry.sync_settings
         stored_props = entry.stored_props
-        for attr in entry.SETTINGS_TYPES:
-            if getattr(sync_settings, attr):
-                exec(f"bpy.ops.sva.{attr}_store_settings(container=self.container, index=self.index)")
+
+        if self.is_storing:
+            for attr in SETTINGS_TYPES:
+                if not getattr(sync_settings, attr):
+                    continue
+                settings = getattr(entry, attr, None)
+                if hasattr(settings, "init"):
+                    settings.init()
+                try:
+                    exec(f"bpy.ops.sva.{attr}_store_settings(store=self.store, index=self.index, is_storing=True)")
+                except TypeError:
+                    exec(f"bpy.ops.sva.{attr}_store_settings(store=self.store, index=self.index)")
+
                 setattr(stored_props, attr, True)
+        else:
+            for attr in SETTINGS_TYPES:
+                if getattr(sync_settings, attr) and getattr(stored_props, attr):
+                    try:
+                        exec(f"bpy.ops.sva.{attr}_store_settings(store=self.store, index=self.index, is_storing=False)")
+                    except TypeError:
+                        exec(f"bpy.ops.sva.{attr}_restore_settings(store=self.store, index=self.index)")
+
         return {"FINISHED"}
 
 
-class SVA_OT_store_entry_sync_settings(bpy.types.Operator):
+class SVA_OT_store_entry_sync_settings(Operator):
     bl_label = "Synchronization Settings"
     bl_idname = "sva.store_entry_sync_settings"
     bl_options = {"REGISTER", "UNDO"}
 
-    container: bpy.props.StringProperty()
-    index: bpy.props.IntProperty()
+    store: StringProperty()
+    index: IntProperty()
 
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
@@ -89,14 +113,9 @@ class SVA_OT_store_entry_sync_settings(bpy.types.Operator):
 
     def draw(self, context):
         layout = self.layout
-        store = context.scene.sva.get_store(self.container)
+        store = context.scene.sva.get(self.store)
 
         sync = layout.row(align=True)
         sync_settings = store.get(self.index).sync_settings
-        sync.prop(sync_settings, "outliner", text="", icon="OUTLINER")
-        sync.prop(sync_settings, "objects", text="", icon="OBJECT_DATAMODE")
-        sync.prop(sync_settings, "view_layers", text="", icon="RENDERLAYERS")
-        sync.prop(sync_settings, "collections", text="", icon="OUTLINER_COLLECTION")
-        sync.prop(sync_settings, "viewport", text="", icon="VIEW3D")
-        sync.prop(sync_settings, "shading", text="", icon="SHADING_RENDERED")
-        sync.prop(sync_settings, "overlays", text="", icon="OVERLAY")
+        for e in SETTINGS_TYPES:
+            sync.prop(sync_settings, e, text="", icon=ICONS.get(e, "BLANK1"))
