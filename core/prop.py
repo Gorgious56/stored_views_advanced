@@ -83,12 +83,12 @@ class ViewSettingsStore(PropertyGroup):
 
 
 class StorePointer(PropertyGroup):
-    store: CollectionProperty(type=ViewSettingsStore)
+    settings: CollectionProperty(type=ViewSettingsStore)
     index: IntProperty()
     name: StringProperty()
 
     def __len__(self):
-        return len(self.store)
+        return len(self.settings)
 
     def get(self, index, default=None):
         """If index is (int), returns entry at index
@@ -96,19 +96,19 @@ class StorePointer(PropertyGroup):
         If index is (ID), returns entry which identifier is index"""
         if isinstance(index, int):
             try:
-                return self.store[index] or default
+                return self.settings[index] or default
             except IndexError:
                 return None
         elif isinstance(index, str):
-            return next(e for e in self.store if e.name == index)
+            return next(e for e in self.settings if e.name == index)
         elif isinstance(index, ID):
             try:
-                return next(e for e in self.store if e.identifier.get() == index)
+                return next(e for e in self.settings if e.identifier.get() == index)
             except StopIteration:
                 return None
 
     def get_index(self, entry):
-        for i, e in enumerate(self.store):
+        for i, e in enumerate(self.settings):
             if e == entry:
                 return i
         return -1
@@ -118,14 +118,14 @@ class StorePointer(PropertyGroup):
         return self.get(self.index)
 
     def add(self, name=""):
-        new = self.store.add()
+        new = self.settings.add()
         new.name = name
         return new
 
     def remove(self, index):
         if index < 0:
             return
-        self.store.remove(index)
+        self.settings.remove(index)
         if index == self.index:
             self.index = max(0, index - 1)
 
