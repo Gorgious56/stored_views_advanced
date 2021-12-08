@@ -6,12 +6,12 @@ class SVA_OT_objects_store_settings(bpy.types.Operator):
     bl_label = "Store Objects Settings"
     bl_idname = "sva.objects_store_settings"
 
-    container: bpy.props.StringProperty()
+    store: bpy.props.StringProperty()
     index: bpy.props.IntProperty()
 
     def execute(self, context):
         scene = context.scene
-        sva_props = scene.sva.get_store(self.container).get(self.index)
+        sva_props = scene.sva.get(self.store).get(self.index)
         for obj in scene.objects:
             sva_props.get_or_create_object_props(obj).store(obj, scene)
 
@@ -22,12 +22,12 @@ class SVA_OT_objects_restore_settings(bpy.types.Operator):
     bl_label = "Restore Objects Settings"
     bl_idname = "sva.objects_restore_settings"
 
-    container: bpy.props.StringProperty()
+    store: bpy.props.StringProperty()
     index: bpy.props.IntProperty()
 
     def execute(self, context):
         scene = context.scene
-        sva_props = scene.sva.get_store(self.container).get(self.index)
+        sva_props = scene.sva.get(self.store).get(self.index)
         for obj in scene.objects:
             sva_props.get_or_create_object_props(obj).restore(obj, scene)
 
